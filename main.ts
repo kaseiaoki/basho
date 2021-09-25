@@ -1,12 +1,31 @@
 import { serve } from "https://deno.land/std@0.83.0/http/server.ts";
 import { config } from "https://deno.land/x/dotenv/mod.ts";
-const s = serve({ port: 8880 });
+import { encode } from "https://deno.land/std/encoding/base64.ts"
+import ky from 'https://cdn.skypack.dev/ky?dts';
+
+// const s = serve({ port: 8880 });
 const {
     APIKEY,
-    SECRET_KEY
+    SECRETKEY
   } = config({ safe: true });
 
+  const authURL = new URL(
+    'https://accounts.spotify.com/api/token'
+  );
 
-for await (const req of s) {
-  req.respond({ body: "Hello World\n" });
-}
+  const authBasicQuery =  APIKEY + ':' + SECRETKEY;
+
+  const searchParams = new URLSearchParams();
+
+  searchParams.set('grant_type', 'client_credentials');
+  (async () => {
+    const parsed = await ky.post(authURL,
+        {
+          headers: {
+            'Authorization': 'Basic ' + encode(authBasicQuery),
+          },
+          body: searchParams,
+      }
+      ).json();
+      await console.log(JSON.stringify(parsed, null, 2))
+    })();
